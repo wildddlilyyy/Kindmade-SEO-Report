@@ -1,5 +1,33 @@
 [
   {
+    "id": "2026-06-24",
+    "label": "2026-06-24 SEO 報告",
+    "reportDate": "2026-06-24",
+    "site": "https://kindmade.com.tw/",
+    "path": "reports/2026-06-24/",
+    "pageCount": 300,
+    "averageScore": 82.5,
+    "grades": {
+      "A": 150,
+      "B": 138,
+      "C": 9,
+      "D": 3
+    },
+    "status": {
+      "200": 297,
+      "404": 3
+    },
+    "issues": {
+      "非 200 狀態頁": 3,
+      "缺少 meta description": 81,
+      "缺少 H1": 3,
+      "缺少 canonical": 22,
+      "圖片缺少 alt 總數": 698,
+      "爬取錯誤頁": 0
+    },
+    "isLatest": true
+  },
+  {
     "id": "2026-05-21",
     "label": "2026-05-21 SEO 報告",
     "reportDate": "2026-05-21",
@@ -25,6 +53,6 @@
       "圖片缺少 alt 總數": 268,
       "爬取錯誤頁": 0
     },
-    "isLatest": true
+    "isLatest": false
   }
 ]
