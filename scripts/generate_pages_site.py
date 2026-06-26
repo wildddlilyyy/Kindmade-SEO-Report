@@ -1,0 +1,161 @@
+from __future__ import annotations
+
+import json
+from datetime import date
+from pathlib import Path
+
+import pandas as pd
+
+
+DOCS = Path("docs")
+REPORT_DATE = date.today().isoformat()
+REPORTS_INDEX = DOCS / "reports.json"
+REPORTS_DIR = DOCS / "reports"
+REPORT_DIR = REPORTS_DIR / REPORT_DATE
+
+
+def main() -> None:
+    REPORT_DIR.mkdir(parents=True, exist_ok=True)
+    df = pd.read_csv("output/seo_report_scored.csv").fillna("")
+
+    records = []
+    for _, row in df.iterrows():
+        records.append(
+            {
+                "url": row["url"],
+                "status": int(row["status_code"]),
+                "score": int(row["seo_score"]),
+                "grade": row["seo_grade"],
+                "priority": row["fix_priority"],
+                "title": row["title"],
+                "titleLength": int(row["title_length"]),
+                "description": row["meta_description"],
+                "descriptionLength": int(row["meta_description_length"]),
+                "h1Count": int(row["h1_count"]),
+                "h1Text": row["h1_text"],
+                "canonical": row["canonical"],
+                "imageCount": int(row["image_count"]),
+                "missingAlt": int(row["images_missing_alt"]),
+                "missingAltRatio": float(row["images_missing_alt_ratio"]),
+                "internalLinks": int(row["internal_links_count"]),
+                "externalLinks": int(row["external_links_count"]),
+                "recommendations": [
+                    item.strip() for item in str(row["recommendations"]).split("；") if item.strip()
+                ],
+                "error": row["error"],
+            }
+        )
+
+    chunk_paths = []
+    for idx in range(0, len(records), 10):
+        chunk = records[idx : idx + 10]
+        path = REPORT_DIR / f"pages-{idx // 10 + 1:02d}.json"
+        path.write_text(json.dumps(chunk, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+        chunk_paths.append(path.name)
+
+    summary = {
+        "reportDate": REPORT_DATE,
+        "site": "https://kindmade.com.tw/",
+        "pageCount": len(records),
+        "averageScore": round(float(df["seo_score"].mean()), 1),
+        "grades": df["seo_grade"].value_counts().reindex(["A", "B", "C", "D"], fill_value=0).to_dict(),
+        "status": df["status_code"].astype(int).value_counts().sort_index().to_dict(),
+        "issues": {
+            "非 200 狀態頁": int((df["status_code"] != 200).sum()),
+            "缺少 meta description": int((df["meta_description"] == "").sum()),
+            "缺少 H1": int((df["h1_count"] == 0).sum()),
+            "缺少 canonical": int((df["canonical"] == "").sum()),
+            "圖片缺少 alt 總數": int(df["images_missing_alt"].sum()),
+            "爬取錯誤頁": int((df["error"].astype(str).str.len() > 0).sum()),
+        },
+        "chunks": chunk_paths,
+    }
+    (REPORT_DIR / "summary.json").write_text(
+        json.dumps(summary, ensure_ascii=False, separators=(",", ":")), encoding="utf-8"
+    )
+    update_reports_index(summary)
+    print(DOCS / "index.html")
+    print(REPORTS_INDEX)
+    print(REPORT_DIR / "summary.json")
+    print(f"chunks={len(chunk_paths)}")
+
+
+def update_reports_index(summary: dict) -> None:
+    report_entry = {
+        "id": summary["reportDate"],
+        "label": f"{summary['reportDate']} SEO 報告",
+        "reportDate": summary["reportDate"],
+        "site": summary["site"],
+        "path": f"reports/{summary['reportDate']}/",
+        "pageCount": summary["pageCount"],
+        "averageScore": summary["averageScore"],
+        "grades": summary["grades"],
+        "status": summary["status"],
+        "issues": summary["issues"],
+        "isLatest": True,
+    }
+    if REPORTS_INDEX.exists():
+        reports = json.loads(REPORTS_INDEX.read_text(encoding="utf-8"))
+    else:
+        reports = []
+    reports = [r for r in reports if r.get("id") != report_entry["id"]]
+    for report in reports:
+        report["isLatest"] = False
+    reports.insert(0, report_entry)
+    reports.sort(key=lambda r: r.get("reportDate", ""), reverse=True)
+    for idx, report in enumerate(reports):
+        report["isLatest"] = idx == 0
+    REPORTS_INDEX.write_text(json.dumps(reports, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def build_index_html() -> str:
+    return """<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kindmade SEO 完整稽核報告</title>
+<style>
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",Arial,sans-serif;margin:0;color:#1f2933;background:#f6f7f9}
+header{background:#173f35;color:#fff;padding:36px 48px}main{padding:28px 48px 56px}h1{margin:0 0 8px;font-size:32px}h2{margin-top:34px;color:#173f35}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin:22px 0}.card{background:white;border:1px solid #e2e8f0;border-radius:8px;padding:18px}.label{color:#64748b;font-size:13px}.value{font-size:28px;font-weight:700;margin-top:6px}
+.note{background:#fff;border-left:4px solid #2f7d5f;padding:14px 16px;margin:16px 0}.table-wrap{overflow:auto;max-height:720px;border:1px solid #d9e2ec;border-radius:8px;background:white}table{border-collapse:collapse;width:100%;font-size:13px}th,td{border-bottom:1px solid #e5e7eb;padding:10px 12px;text-align:left;vertical-align:top;line-height:1.55;max-width:360px;overflow-wrap:anywhere}th{position:sticky;top:0;background:#eef5f1;color:#173f35;z-index:1}tr:hover td{background:#fafafa}.url{min-width:260px;max-width:420px}.desc{min-width:280px;max-width:460px}.rec{min-width:300px;max-width:480px}.rec ul{margin:0;padding-left:18px}a{color:#116149;text-decoration:underline;text-underline-offset:2px}.pill{display:inline-block;border-radius:999px;padding:2px 8px;background:#e8f3ed;color:#173f35}
+</style>
+</head>
+<body>
+<header><h1>Kindmade SEO 完整稽核報告</h1><div id="meta">載入中...</div></header>
+<main>
+<section class="grid" id="summaryCards"></section>
+<div class="note">本報告將每個被檢查頁面的 SEO 狀態、分數、問題與建議處理方向完整整理，方便業主掌握目前網站健康度，並作為後續修正排程與驗收追蹤的依據。</div>
+<h2>HTTP 狀態碼分布</h2><div id="statusTable"></div>
+<h2>問題統計</h2><div id="issueTable"></div>
+<h2>評分方式</h2><div id="scoreTable"></div>
+<h2>CSV 欄位說明</h2><div id="fieldTable"></div>
+<h2>優先處理頁面 Top 20</h2><div id="priorityTable"></div>
+<h2>每頁完整 SEO 爬蟲內容</h2><div id="pageTable"></div>
+<h2>建議執行順序</h2>
+<ol><li>修正非 200 頁面，尤其是 404，確認要恢復頁面、建立 301 轉址，或移除站內錯誤連結。</li><li>補齊缺少 meta description 的頁面，讓搜尋結果摘要更完整且更有點擊吸引力。</li><li>補上缺少 H1 與 canonical 的頁面，穩定頁面主題與標準網址訊號。</li><li>批次補齊圖片 alt，先處理首頁、產品頁、服務頁與高流量頁面。</li><li>檢查低分頁面的內部連結，建立更清楚的主題關聯與導流路徑。</li><li>完成基礎修正後，再進一步做關鍵字布局、內容深度與搜尋意圖優化。</li></ol>
+</main>
+<script>
+const esc=v=>String(v??"").replace(/[&<>"']/g,s=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[s]));
+const link=u=>u?`<a href="${esc(u)}" target="_blank" rel="noopener noreferrer">${esc(u)}</a>`:"";
+const rec=items=>`<ul>${(items||[]).map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`;
+function table(headers, rows){return `<div class="table-wrap"><table><thead><tr>${headers.map(h=>`<th>${esc(h)}</th>`).join("")}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`}
+async function load(){const s=await fetch("data/summary.json").then(r=>r.json());const pages=(await Promise.all(s.chunks.map(p=>fetch(p).then(r=>r.json())))).flat();
+document.getElementById("meta").textContent=`分析網站：${s.site}｜SEO 報告日期：${s.reportDate}｜分析範圍：同網域前 ${s.pageCount} 頁`;
+document.getElementById("summaryCards").innerHTML=[["平均 SEO 分數",s.averageScore],["A 級頁面",s.grades.A],["B 級頁面",s.grades.B],["D 級頁面",s.grades.D],["缺少 Description",s.issues["缺少 meta description"]],["缺 alt 圖片",s.issues["圖片缺少 alt 總數"]]].map(([a,b])=>`<div class="card"><div class="label">${a}</div><div class="value">${b}</div></div>`).join("");
+document.getElementById("statusTable").innerHTML=table(["狀態碼","頁數"],Object.entries(s.status).map(([k,v])=>[esc(k),esc(v)]));
+document.getElementById("issueTable").innerHTML=table(["問題類型","數量"],Object.entries(s.issues).map(([k,v])=>[esc(k),esc(v)]));
+document.getElementById("scoreTable").innerHTML=table(["評分項目","配分","判斷方式"],[["HTTP 狀態碼","20","200 滿分；轉址部分扣分；404/500 為 0 分。"],["Title","15","檢查是否存在，以及長度是否適合搜尋結果呈現。"],["Meta description","15","檢查是否存在，以及是否有足夠資訊吸引用戶點擊。"],["H1","15","檢查是否有唯一且清楚的頁面主標題。"],["Canonical","10","檢查是否有標準網址設定，避免重複內容問題。"],["圖片 alt","10","依缺少 alt 的圖片比例扣分。"],["內部連結","10","檢查頁面是否有足夠站內連結支援爬取與權重流動。"],["爬取錯誤","5","確認頁面是否能被正常抓取與分析。"]].map(r=>r.map(esc)));
+document.getElementById("fieldTable").innerHTML=table(["欄位","中文名稱","SEO 意涵"],[["url","頁面網址","被爬蟲實際檢查的網址，用來定位每一頁的 SEO 狀態。"],["status_code","HTTP 狀態碼","判斷頁面是否可正常存取，200 正常，404 代表找不到頁面。"],["title / title_length","頁面標題與長度","搜尋結果標題的重要來源，應清楚、獨特並包含核心關鍵字。"],["meta_description / meta_description_length","頁面描述與長度","搜尋結果摘要的重要來源，影響使用者點擊意願。"],["h1_count / h1_text","H1 數量與文字","判斷頁面主題是否明確，通常建議一頁有一個主要 H1。"],["canonical","標準網址","協助搜尋引擎辨識主要 URL，避免重複內容分散權重。"],["image_count / images_missing_alt","圖片數與缺 alt 數","圖片 alt 有助圖片 SEO、無障礙與搜尋引擎理解圖片內容。"],["seo_score / seo_grade","SEO 分數與等級","依技術與內容基礎項目換算出的 100 分制與 A-D 等級。"],["recommendations","頁面建議","針對該頁目前偵測到的問題給出的修改方向。"]].map(r=>r.map(esc)));
+const priority={緊急:0,高:1,中:2,低:3};const top=[...pages].sort((a,b)=>(priority[a.priority]??9)-(priority[b.priority]??9)||a.score-b.score||b.missingAlt-a.missingAlt).slice(0,20);
+document.getElementById("priorityTable").innerHTML=table(["URL","分數","等級","優先級","建議修改方向"],top.map(p=>[`<span class="url">${link(p.url)}</span>`,esc(p.score),esc(p.grade),esc(p.priority),`<span class="rec">${rec(p.recommendations)}</span>`]));
+document.getElementById("pageTable").innerHTML=table(["#","URL","狀態碼","分數","等級","優先級","Title","Title 長度","Meta Description","Description 長度","H1 數量","H1 文字","Canonical","圖片數","缺 alt 圖片數","缺 alt 比例","內部連結","外部連結","建議修改方向","錯誤"],pages.map((p,i)=>[i+1,`<span class="url">${link(p.url)}</span>`,esc(p.status),esc(p.score),esc(p.grade),esc(p.priority),esc(p.title),esc(p.titleLength),`<span class="desc">${esc(p.description)}</span>`,esc(p.descriptionLength),esc(p.h1Count),esc(p.h1Text),`<span class="url">${link(p.canonical)}</span>`,esc(p.imageCount),esc(p.missingAlt),esc(p.missingAltRatio),esc(p.internalLinks),esc(p.externalLinks),`<span class="rec">${rec(p.recommendations)}</span>`,esc(p.error)]));
+}load();
+</script>
+</body>
+</html>"""
+
+
+if __name__ == "__main__":
+    main()
