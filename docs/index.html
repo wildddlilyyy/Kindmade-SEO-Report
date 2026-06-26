@@ -3,19 +3,31 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Kindmade SEO 完整稽核報告</title>
+<title>Kindmade SEO 報告中心</title>
 <style>
 body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",Arial,sans-serif;margin:0;color:#1f2933;background:#f6f7f9}
-header{background:#173f35;color:#fff;padding:36px 48px}main{padding:28px 48px 56px}h1{margin:0 0 8px;font-size:32px}h2{margin-top:34px;color:#173f35}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin:22px 0}.card{background:white;border:1px solid #e2e8f0;border-radius:8px;padding:18px}.label{color:#64748b;font-size:13px}.value{font-size:28px;font-weight:700;margin-top:6px}
-.note{background:#fff;border-left:4px solid #2f7d5f;padding:14px 16px;margin:16px 0}.table-wrap{overflow:auto;max-height:720px;border:1px solid #d9e2ec;border-radius:8px;background:white}table{border-collapse:collapse;width:100%;font-size:13px}th,td{border-bottom:1px solid #e5e7eb;padding:10px 12px;text-align:left;vertical-align:top;line-height:1.55;max-width:360px;overflow-wrap:anywhere}th{position:sticky;top:0;background:#eef5f1;color:#173f35;z-index:1}tr:hover td{background:#fafafa}.url{min-width:260px;max-width:420px}.desc{min-width:280px;max-width:460px}.rec{min-width:300px;max-width:480px}.rec ul{margin:0;padding-left:18px}a{color:#116149;text-decoration:underline;text-underline-offset:2px}.pill{display:inline-block;border-radius:999px;padding:2px 8px;background:#e8f3ed;color:#173f35}
+header{background:#173f35;color:#fff;padding:36px 48px}main{padding:28px 48px 56px}h1{margin:0 0 8px;font-size:32px}h2{margin-top:34px;color:#173f35}.muted{color:#64748b}
+.toolbar{display:flex;gap:14px;align-items:end;flex-wrap:wrap;margin-top:22px}.control{display:flex;flex-direction:column;gap:6px}.control label{font-size:13px;color:#d7ede5}.control select{min-width:240px;border:1px solid #9bc5b6;border-radius:6px;padding:10px 12px;background:#fff;color:#173f35;font-size:15px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin:22px 0}.card{background:white;border:1px solid #e2e8f0;border-radius:8px;padding:18px}.label{color:#64748b;font-size:13px}.value{font-size:28px;font-weight:700;margin-top:6px}.report-card{cursor:pointer;transition:.15s border-color,.15s transform}.report-card:hover{border-color:#2f7d5f;transform:translateY(-1px)}.report-card.active{border-color:#173f35;box-shadow:0 0 0 2px #cde6db}.report-title{display:flex;align-items:center;gap:8px;font-weight:700;color:#173f35}.report-meta{margin-top:10px;color:#52616b;font-size:13px;line-height:1.6}
+.note{background:#fff;border-left:4px solid #2f7d5f;padding:14px 16px;margin:16px 0}.table-wrap{overflow:auto;max-height:720px;border:1px solid #d9e2ec;border-radius:8px;background:white}table{border-collapse:collapse;width:100%;font-size:13px}th,td{border-bottom:1px solid #e5e7eb;padding:10px 12px;text-align:left;vertical-align:top;line-height:1.55;max-width:360px;overflow-wrap:anywhere}th{position:sticky;top:0;background:#eef5f1;color:#173f35;z-index:1}tr:hover td{background:#fafafa}.url{min-width:260px;max-width:420px}.desc{min-width:280px;max-width:460px}.rec{min-width:300px;max-width:480px}.rec ul{margin:0;padding-left:18px}a{color:#116149;text-decoration:underline;text-underline-offset:2px}.pill{display:inline-block;border-radius:999px;padding:2px 8px;background:#e8f3ed;color:#173f35;font-size:12px}.latest{background:#ffe9b7;color:#6f4b00}.loading{padding:18px;background:white;border:1px solid #e2e8f0;border-radius:8px}.error{background:#fff1f2;border-left-color:#e11d48;color:#9f1239}
+@media (max-width:720px){header{padding:28px 22px}main{padding:22px}h1{font-size:26px}.control select{width:100%;min-width:0}.toolbar{align-items:stretch}.control{width:100%}}
 </style>
 </head>
 <body>
-<header><h1>Kindmade SEO 完整稽核報告</h1><div id="meta">載入中...</div></header>
+<header>
+  <h1>Kindmade SEO 報告中心</h1>
+  <div id="meta">載入中...</div>
+  <div class="toolbar">
+    <div class="control">
+      <label for="reportSelect">報告日期</label>
+      <select id="reportSelect" disabled><option>載入中...</option></select>
+    </div>
+  </div>
+</header>
 <main>
 <section class="grid" id="summaryCards"></section>
 <div class="note">本報告將每個被檢查頁面的 SEO 狀態、分數、問題與建議處理方向完整整理，方便業主掌握目前網站健康度，並作為後續修正排程與驗收追蹤的依據。</div>
+<h2>歷史報告</h2><div class="grid" id="reportList"></div>
 <h2>HTTP 狀態碼分布</h2><div id="statusTable"></div>
 <h2>問題統計</h2><div id="issueTable"></div>
 <h2>評分方式</h2><div id="scoreTable"></div>
@@ -23,24 +35,23 @@ header{background:#173f35;color:#fff;padding:36px 48px}main{padding:28px 48px 56
 <h2>優先處理頁面 Top 20</h2><div id="priorityTable"></div>
 <h2>每頁完整 SEO 爬蟲內容</h2><div id="pageTable"></div>
 <h2>建議執行順序</h2>
-<ol><li>修正非 200 頁面，尤其是 404，確認要恢復頁面、建立 301 轉址，或移除站內錯誤連結。</li><li>補齊缺少 meta description 的頁面，讓搜尋結果摘要更完整且更有點擊吸引力。</li><li>補上缺少 H1 與 canonical 的頁面，穩定頁面主題與標準網址訊號。</li><li>批次補齊圖片 alt，先處理首頁、產品頁與高流量頁面。</li><li>檢查低分頁面的內部連結，建立更清楚的主題關聯與導流路徑。</li><li>完成基礎修正後，再進一步做關鍵字布局、內容深度與搜尋意圖優化。</li></ol>
+<ol><li>修正非 200 頁面，尤其是 404，確認要恢復頁面、建立 301 轉址，或移除站內錯誤連結。</li><li>補齊缺少 meta description 的頁面，讓搜尋結果摘要更完整且更有點擊吸引力。</li><li>補上缺少 H1 與 canonical 的頁面，穩定頁面主題與標準網址訊號。</li><li>批次補齊圖片 alt，先處理首頁、產品頁、服務頁與高流量頁面。</li><li>檢查低分頁面的內部連結，建立更清楚的主題關聯與導流路徑。</li><li>完成基礎修正後，再進一步做關鍵字布局、內容深度與搜尋意圖優化。</li></ol>
 </main>
 <script>
 const esc=v=>String(v??"").replace(/[&<>"']/g,s=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[s]));
 const link=u=>u?`<a href="${esc(u)}" target="_blank" rel="noopener noreferrer">${esc(u)}</a>`:"";
 const rec=items=>`<ul>${(items||[]).map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`;
+const priority={緊急:0,高:1,中:2,低:3};
+let reports=[];
 function table(headers, rows){return `<div class="table-wrap"><table><thead><tr>${headers.map(h=>`<th>${esc(h)}</th>`).join("")}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`}
-async function load(){const s=await fetch("data/summary.json").then(r=>r.json());const pages=(await Promise.all(s.chunks.map(p=>fetch(p).then(r=>r.json())))).flat();
-document.getElementById("meta").textContent=`分析網站：${s.site}｜SEO 報告日期：${s.reportDate}｜分析範圍：同網域前 ${s.pageCount} 頁`;
-document.getElementById("summaryCards").innerHTML=[["平均 SEO 分數",s.averageScore],["A 級頁面",s.grades.A],["B 級頁面",s.grades.B],["D 級頁面",s.grades.D],["缺少 Description",s.issues["缺少 meta description"]],["缺 alt 圖片",s.issues["圖片缺少 alt 總數"]]].map(([a,b])=>`<div class="card"><div class="label">${a}</div><div class="value">${b}</div></div>`).join("");
-document.getElementById("statusTable").innerHTML=table(["狀態碼","頁數"],Object.entries(s.status).map(([k,v])=>[esc(k),esc(v)]));
-document.getElementById("issueTable").innerHTML=table(["問題類型","數量"],Object.entries(s.issues).map(([k,v])=>[esc(k),esc(v)]));
-document.getElementById("scoreTable").innerHTML=table(["評分項目","配分","判斷方式"],[["HTTP 狀態碼","20","200 滿分；轉址部分扣分；404/500 為 0 分。"],["Title","15","檢查是否存在，以及長度是否適合搜尋結果呈現。"],["Meta description","15","檢查是否存在，以及是否有足夠資訊吸引用戶點擊。"],["H1","15","檢查是否有唯一且清楚的頁面主標題。"],["Canonical","10","檢查是否有標準網址設定，避免重複內容問題。"],["圖片 alt","10","依缺少 alt 的圖片比例扣分。"],["內部連結","10","檢查頁面是否有足夠站內連結支援爬取與權重流動。"],["爬取錯誤","5","確認頁面是否能被正常抓取與分析。"]].map(r=>r.map(esc)));
-document.getElementById("fieldTable").innerHTML=table(["欄位","中文名稱","SEO 意涵"],[["url","頁面網址","被爬蟲實際檢查的網址，用來定位每一頁的 SEO 狀態。"],["status_code","HTTP 狀態碼","判斷頁面是否可正常存取，200 正常，404 代表找不到頁面。"],["title / title_length","頁面標題與長度","搜尋結果標題的重要來源，應清楚、獨特並包含核心關鍵字。"],["meta_description / meta_description_length","頁面描述與長度","搜尋結果摘要的重要來源，影響使用者點擊意願。"],["h1_count / h1_text","H1 數量與文字","判斷頁面主題是否明確，通常建議一頁有一個主要 H1。"],["canonical","標準網址","協助搜尋引擎辨識主要 URL，避免重複內容分散權重。"],["image_count / images_missing_alt","圖片數與缺 alt 數","圖片 alt 有助圖片 SEO、無障礙與搜尋引擎理解圖片內容。"],["seo_score / seo_grade","SEO 分數與等級","依技術與內容基礎項目換算出的 100 分制與 A-D 等級。"],["recommendations","頁面建議","針對該頁目前偵測到的問題給出的修改方向。"]].map(r=>r.map(esc)));
-const priority={緊急:0,高:1,中:2,低:3};const top=[...pages].sort((a,b)=>(priority[a.priority]??9)-(priority[b.priority]??9)||a.score-b.score||b.missingAlt-a.missingAlt).slice(0,20);
-document.getElementById("priorityTable").innerHTML=table(["URL","分數","等級","優先級","建議修改方向"],top.map(p=>[`<span class="url">${link(p.url)}</span>`,esc(p.score),esc(p.grade),esc(p.priority),`<span class="rec">${rec(p.recommendations)}</span>`]));
-document.getElementById("pageTable").innerHTML=table(["#","URL","狀態碼","分數","等級","優先級","Title","Title 長度","Meta Description","Description 長度","H1 數量","H1 文字","Canonical","圖片數","缺 alt 圖片數","缺 alt 比例","內部連結","外部連結","建議修改方向","錯誤"],pages.map((p,i)=>[i+1,`<span class="url">${link(p.url)}</span>`,esc(p.status),esc(p.score),esc(p.grade),esc(p.priority),esc(p.title),esc(p.titleLength),`<span class="desc">${esc(p.description)}</span>`,esc(p.descriptionLength),esc(p.h1Count),esc(p.h1Text),`<span class="url">${link(p.canonical)}</span>`,esc(p.imageCount),esc(p.missingAlt),esc(p.missingAltRatio),esc(p.internalLinks),esc(p.externalLinks),`<span class="rec">${rec(p.recommendations)}</span>`,esc(p.error)]));
-}load();
+function clearReportContent(message="載入中..."){["summaryCards","statusTable","issueTable","priorityTable","pageTable"].forEach(id=>{document.getElementById(id).innerHTML=`<div class="loading">${esc(message)}</div>`})}
+function reportOptionLabel(r){return `${r.reportDate} SEO 報告${r.isLatest?"（最新）":""}`;}
+function reportIssueCount(r){return Object.values(r.issues||{}).reduce((sum,n)=>sum+Number(n||0),0);}
+function renderReportSwitcher(activeId){const select=document.getElementById("reportSelect");select.disabled=false;select.innerHTML=reports.map(r=>`<option value="${esc(r.id)}"${r.id===activeId?" selected":""}>${esc(reportOptionLabel(r))}</option>`).join("");document.getElementById("reportList").innerHTML=reports.map(r=>`<div class="card report-card ${r.id===activeId?"active":""}" data-report-id="${esc(r.id)}"><div class="report-title">${esc(r.reportDate)}${r.isLatest?` <span class="pill latest">最新報告</span>`:""}</div><div class="report-meta">平均分數：${esc(r.averageScore)}<br>A / B / D：${esc(r.grades?.A??0)} / ${esc(r.grades?.B??0)} / ${esc(r.grades?.D??0)}<br>頁數：${esc(r.pageCount)}｜主要問題數：${esc(reportIssueCount(r))}</div></div>`).join("");document.querySelectorAll(".report-card").forEach(card=>card.addEventListener("click",()=>loadReport(card.dataset.reportId)));}
+function renderStaticTables(){document.getElementById("scoreTable").innerHTML=table(["評分項目","配分","判斷方式"],[["HTTP 狀態碼","20","200 滿分；轉址部分扣分；404/500 為 0 分。"],["Title","15","檢查是否存在，以及長度是否適合搜尋結果呈現。"],["Meta description","15","檢查是否存在，以及是否有足夠資訊吸引用戶點擊。"],["H1","15","檢查是否有唯一且清楚的頁面主標題。"],["Canonical","10","檢查是否有標準網址設定，避免重複內容問題。"],["圖片 alt","10","依缺少 alt 的圖片比例扣分。"],["內部連結","10","檢查頁面是否有足夠站內連結支援爬取與權重流動。"],["爬取錯誤","5","確認頁面是否能被正常抓取與分析。"]].map(r=>r.map(esc)));document.getElementById("fieldTable").innerHTML=table(["欄位","中文名稱","SEO 意涵"],[["url","頁面網址","被爬蟲實際檢查的網址，用來定位每一頁的 SEO 狀態。"],["status_code","HTTP 狀態碼","判斷頁面是否可正常存取，200 正常，404 代表找不到頁面。"],["title / title_length","頁面標題與長度","搜尋結果標題的重要來源，應清楚、獨特並包含核心關鍵字。"],["meta_description / meta_description_length","頁面描述與長度","搜尋結果摘要的重要來源，影響使用者點擊意願。"],["h1_count / h1_text","H1 數量與文字","判斷頁面主題是否明確，通常建議一頁有一個主要 H1。"],["canonical","標準網址","協助搜尋引擎辨識主要 URL，避免重複內容分散權重。"],["image_count / images_missing_alt","圖片數與缺 alt 數","圖片 alt 有助圖片 SEO、無障礙與搜尋引擎理解圖片內容。"],["seo_score / seo_grade","SEO 分數與等級","依技術與內容基礎項目換算出的 100 分制與 A-D 等級。"],["recommendations","頁面建議","針對該頁目前偵測到的問題給出的修改方向。"]].map(r=>r.map(esc)));}
+async function loadReport(reportId){const report=reports.find(r=>r.id===reportId)||reports.find(r=>r.isLatest)||reports[0];if(!report)return;clearReportContent();renderReportSwitcher(report.id);const base=report.path.endsWith("/")?report.path:`${report.path}/`;const s=await fetch(`${base}summary.json`).then(r=>r.json());const pages=(await Promise.all(s.chunks.map(p=>fetch(`${base}${p}`).then(r=>r.json())))).flat();document.getElementById("meta").textContent=`分析網站：${s.site}｜SEO 報告日期：${s.reportDate}｜分析範圍：同網域前 ${s.pageCount} 頁`;document.getElementById("summaryCards").innerHTML=[["平均 SEO 分數",s.averageScore],["A 級頁面",s.grades.A],["B 級頁面",s.grades.B],["D 級頁面",s.grades.D],["缺少 Description",s.issues["缺少 meta description"]],["缺 alt 圖片",s.issues["圖片缺少 alt 總數"]]].map(([a,b])=>`<div class="card"><div class="label">${a}</div><div class="value">${b}</div></div>`).join("");document.getElementById("statusTable").innerHTML=table(["狀態碼","頁數"],Object.entries(s.status).map(([k,v])=>[esc(k),esc(v)]));document.getElementById("issueTable").innerHTML=table(["問題類型","數量"],Object.entries(s.issues).map(([k,v])=>[esc(k),esc(v)]));const top=[...pages].sort((a,b)=>(priority[a.priority]??9)-(priority[b.priority]??9)||a.score-b.score||b.missingAlt-a.missingAlt).slice(0,20);document.getElementById("priorityTable").innerHTML=table(["URL","分數","等級","優先級","建議修改方向"],top.map(p=>[`<span class="url">${link(p.url)}</span>`,esc(p.score),esc(p.grade),esc(p.priority),`<span class="rec">${rec(p.recommendations)}</span>`]));document.getElementById("pageTable").innerHTML=table(["#","URL","狀態碼","分數","等級","優先級","Title","Title 長度","Meta Description","Description 長度","H1 數量","H1 文字","Canonical","圖片數","缺 alt 圖片數","缺 alt 比例","內部連結","外部連結","建議修改方向","錯誤"],pages.map((p,i)=>[i+1,`<span class="url">${link(p.url)}</span>`,esc(p.status),esc(p.score),esc(p.grade),esc(p.priority),esc(p.title),esc(p.titleLength),`<span class="desc">${esc(p.description)}</span>`,esc(p.descriptionLength),esc(p.h1Count),esc(p.h1Text),`<span class="url">${link(p.canonical)}</span>`,esc(p.imageCount),esc(p.missingAlt),esc(p.missingAltRatio),esc(p.internalLinks),esc(p.externalLinks),`<span class="rec">${rec(p.recommendations)}</span>`,esc(p.error)]));}
+async function init(){renderStaticTables();clearReportContent();try{reports=await fetch("reports.json").then(r=>r.json());reports.sort((a,b)=>String(b.reportDate).localeCompare(String(a.reportDate)));document.getElementById("reportSelect").addEventListener("change",e=>loadReport(e.target.value));await loadReport((reports.find(r=>r.isLatest)||reports[0]||{}).id);}catch(err){document.getElementById("meta").textContent="報告載入失敗";document.getElementById("summaryCards").innerHTML=`<div class="note error">無法載入報告索引，請確認 reports.json 與報告資料夾是否已部署。</div>`;console.error(err);}}
+init();
 </script>
 </body>
 </html>
